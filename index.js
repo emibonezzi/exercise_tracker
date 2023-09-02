@@ -176,6 +176,7 @@ app.get('/api/users/:_id/logs', function (req, res) {
   })
 })
 
+// GET endpoint for single user
 app.get('/api/users/:_id', function (req, res) {
   // search for user
   UserModel.findOne({ _id: req.params._id }).then(data => {
@@ -187,6 +188,13 @@ app.get('/api/users/:_id', function (req, res) {
       // if user not found
       res.json({ error: "user not found" })
     }
+  })
+})
+
+// GET end point to get all user
+app.get('/api/users', function(req, res) {
+  UserModel.find().then(data => {
+    res.json(data)
   })
 })
 
