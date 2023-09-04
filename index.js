@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // create user Schema
 const userSchema = new mongoose.Schema({
-  username: String
+  username: String,
 })
 
 // create user Model
@@ -146,11 +146,11 @@ app.post('/api/users/:_id/exercises', function (req, res) {
         console.log("Exercised saved!")
 
         res.json({
-          _id: userID,
           username: userUsername,
-          date: new Date(data.date).toDateString(),
+          description: req.body.description,
           duration: Number(req.body.duration),
-          description: req.body.description
+          date: new Date(data.date).toDateString(),
+          _id: userID
         })
       })
     }
