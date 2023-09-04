@@ -74,11 +74,11 @@ app.post('/api/users/:_id/exercises', function (req, res) {
     data.save().then(data => {
       // send response with user object with the exercise fields added
       res.json({
+        _id: data._id,
         username: data.username,
-        description: req.body.description,
-        duration: req.body.duration,
         date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString(),
-        _id: data._id
+        duration: req.body.duration,
+        description: req.body.description
       })
     })
 
@@ -93,9 +93,9 @@ app.get('/api/users/:_id/logs', function (req, res) {
   UserModel.findOne({ _id: req.params._id }).then(data => {
     //send back response with the user object with a log array of all the exercises added
     res.json({
+      _id: data._id,
       username: data.username,
       count: data.log.length,
-      _id: data._id,
       log: data.log
     })
   }).catch(error => res.send(error.toString()))
