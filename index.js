@@ -18,41 +18,12 @@ mongoose.connect(process.env.MONGO_URI, {
 // create user Schema
 const userSchema = new mongoose.Schema({
   username: String,
+  count: Number,
+  log: [Object]
 })
 
 // create user Model
 const UserModel = new mongoose.model('UserModel', userSchema)
-
-// create exercise Schema
-const exerciseSchema = new mongoose.Schema({
-  username: String,
-  description: {
-    type: String,
-    required: true
-  },
-  duration: {
-    type: Number,
-    required: true
-  },
-  date: {
-    type: String,
-    default: new Date(Date.now()).toDateString()
-  }
-})
-
-// create exercise Model
-const ExerciseModel = new mongoose.model('ExerciseModel', exerciseSchema)
-
-// create log Schema
-const logSchema = new mongoose.Schema({
-  username: String,
-  count: Number,
-  _id: String,
-  log: [Object]
-})
-
-// create log Model
-const LogModel = new mongoose.model('LogModel', logSchema)
 
 // cors middleware
 app.use(cors())
@@ -81,21 +52,6 @@ app.post('/api/users', function (req, res) {
       // save user to DB
       user.save().then(data => {
         console.log('User added!')
-        // save user info to use on the log
-        const userUsername = data.username;
-        const userID = data._id
-        // create user LOG
-        let log = new LogModel({
-          username: userUsername,
-          count: 0,
-          _id: userID,
-          log: []
-        })
-        // save new LOG to DB
-        log.save().then(data => {
-          // user saved
-          console.log('Log added!')
-        })
         // send response
         res.json({ username: data.username, _id: data._id })
       })
@@ -107,57 +63,26 @@ app.post('/api/users', function (req, res) {
 app.post('/api/users/:_id/exercises', function (req, res) {
   // search for user
   UserModel.findOne({ _id: req.body[':_id'] }).then(data => {
-    // if user found
-    if (data) {
-      const userID = data._id
-      const userUsername = data.username
-      console.log(req.body.date)
-      // create exercise
-      let exercise = new ExerciseModel({
-        username: userUsername,
+    //save exercise into user log
+    data.log.push({
+      description: req.body.description,
+      duration: req.body.duration,
+      date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
+    })
+
+    // save edits
+    data.save().then(data => {
+      // send response with user object with the exercise fields added
+      res.json({
+        username: data.username,
         description: req.body.description,
-        duration: Number(req.body.duration),
-        // if given date is empty string return undefined so mongoose Schema inserts today's date
-        date: req.body.date ? new Date(req.body.date).toDateString() : undefined
+        duration: req.body.duration,
+        date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString(),
+        _id: data._id
       })
+    })
 
-      // add exercise into user's log
-      LogModel.findOne({ username: userUsername }).then(data => {
-        // push exercise into log array
-        data.log.push({
-          description: req.body.description,
-          duration: Number(req.body.duration),
-          // if given date is empty string return undefined so mongoose Schema inserts today's date
-          date: req.body.date ? new Date(req.body.date).toDateString() : undefined
-        })
 
-        // increase count
-        data.count += 1
-
-        // save edits
-        data.save().then(data => {
-          console.log('Exercise added to log!')
-        })
-
-      })
-
-      // add exercise to db
-      exercise.save().then(data => {
-        console.log("Exercised saved!")
-
-        res.json({
-          username: userUsername,
-          description: req.body.description,
-          duration: Number(req.body.duration),
-          date: new Date(data.date).toDateString(),
-          _id: userID
-        })
-      })
-    }
-    else {
-      // if user found
-      res.json({ error: 'user not found' })
-    }
   }).catch(error => res.send(error.toString()))
 
 })
@@ -166,42 +91,17 @@ app.post('/api/users/:_id/exercises', function (req, res) {
 // GET endpoint to get exercise log
 app.get('/api/users/:_id/logs', function (req, res) {
   UserModel.findOne({ _id: req.params._id }).then(data => {
-    // if user found
-    const userUsername = data.username
-    const userId = data._id
-    if (data) {
-      // check for user log
-      LogModel.findOne({ username: userUsername }).then(data => {
-        res.json({
-          _id: userId,
-          username: userUsername,
-          count: data.count,
-          log: data.log
-        })
-      })
-    }
-    else {
-      res.json({ error: 'user not found' })
-    }
+    //send back response with the user object with a log array of all the exercises added
+    res.json({
+      username: data.username,
+      count: data.log.length,
+      _id: data._id,
+      log: data.log
+    })
   }).catch(error => res.send(error.toString()))
 })
 
-// GET endpoint for single user
-app.get('/api/users/:_id', function (req, res) {
-  // search for user
-  UserModel.findOne({ _id: req.params._id }).then(data => {
-    // if user found
-    if (data) {
-      res.json({ username: data.username, _id: data._id })
-    }
-    else {
-      // if user not found
-      res.json({ error: "user not found" })
-    }
-  }).catch(error => res.send(error.toString()))
-})
-
-// GET end point to get all user
+// GET end point to get all users
 app.get('/api/users', function (req, res) {
   UserModel.find().then(data => {
     res.json(data)
