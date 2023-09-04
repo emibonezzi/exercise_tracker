@@ -34,7 +34,10 @@ const exerciseSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  date: String
+  date: {
+    type: String,
+    default: new Date(Date.now()).toDateString()
+  }
 })
 
 // create exercise Model
@@ -106,23 +109,22 @@ app.post('/api/users/:_id/exercises', function (req, res) {
   UserModel.findOne({ _id: req.body[':_id'] }).then(data => {
     const userID = data._id
     const userUsername = data.username
+    console.log(req.body.date)
     // if user found
     if (data) {
 
       // create exercise
       let exercise = new ExerciseModel({
         description: req.body.description,
-        duration: req.body.duration,
-        date: new Date(req.body.date).toDateString()
+        duration: Number(req.body.duration),
+        date: req.body.date ? new Date(req.body.date).toDateString() : undefined
       })
 
       // add exercise into user's log
       LogModel.findOne({ username: userUsername }).then(data => {
         // push exercise into log array
         data.log.push({
-          description: req.body.description,
-          duration: Number(req.body.duration),
-          date: new Date(req.body.date).toDateString()
+          exercise
         })
 
         // increase count
@@ -136,13 +138,17 @@ app.post('/api/users/:_id/exercises', function (req, res) {
       })
 
       // add exercise to db
-      exercise.save().then(data => res.json({
+      exercise.save().then(data => {
+        console.log("Exercised saved!")
+
+        res.json({
         _id: userID,
         username: userUsername,
-        date: new Date(req.body.date).toDateString(),
+        date: new Date(data.date).toDateString(),
         duration: Number(req.body.duration),
         description: req.body.description
-      }))
+      })
+    })
     }
     else {
       // if user found
