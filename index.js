@@ -107,16 +107,17 @@ app.post('/api/users', function (req, res) {
 app.post('/api/users/:_id/exercises', function (req, res) {
   // search for user
   UserModel.findOne({ _id: req.body[':_id'] }).then(data => {
-    const userID = data._id
-    const userUsername = data.username
-    console.log(req.body.date)
     // if user found
     if (data) {
-
+      const userID = data._id
+      const userUsername = data.username
+      console.log(req.body.date)
       // create exercise
       let exercise = new ExerciseModel({
+        username: userUsername,
         description: req.body.description,
         duration: Number(req.body.duration),
+        // if given date is empty string return undefined so mongoose Schema inserts today's date
         date: req.body.date ? new Date(req.body.date).toDateString() : undefined
       })
 
@@ -124,7 +125,10 @@ app.post('/api/users/:_id/exercises', function (req, res) {
       LogModel.findOne({ username: userUsername }).then(data => {
         // push exercise into log array
         data.log.push({
-          exercise
+          description: req.body.description,
+          duration: Number(req.body.duration),
+          // if given date is empty string return undefined so mongoose Schema inserts today's date
+          date: req.body.date ? new Date(req.body.date).toDateString() : undefined
         })
 
         // increase count
@@ -142,19 +146,19 @@ app.post('/api/users/:_id/exercises', function (req, res) {
         console.log("Exercised saved!")
 
         res.json({
-        _id: userID,
-        username: userUsername,
-        date: new Date(data.date).toDateString(),
-        duration: Number(req.body.duration),
-        description: req.body.description
+          _id: userID,
+          username: userUsername,
+          date: new Date(data.date).toDateString(),
+          duration: Number(req.body.duration),
+          description: req.body.description
+        })
       })
-    })
     }
     else {
       // if user found
       res.json({ error: 'user not found' })
     }
-  })
+  }).catch(error => res.send(error.toString()))
 
 })
 
@@ -179,7 +183,7 @@ app.get('/api/users/:_id/logs', function (req, res) {
     else {
       res.json({ error: 'user not found' })
     }
-  })
+  }).catch(error => res.send(error.toString()))
 })
 
 // GET endpoint for single user
@@ -194,14 +198,14 @@ app.get('/api/users/:_id', function (req, res) {
       // if user not found
       res.json({ error: "user not found" })
     }
-  })
+  }).catch(error => res.send(error.toString()))
 })
 
 // GET end point to get all user
-app.get('/api/users', function(req, res) {
+app.get('/api/users', function (req, res) {
   UserModel.find().then(data => {
     res.json(data)
-  })
+  }).catch(error => res.send(error.toString()))
 })
 
 // start listener for incoming request
