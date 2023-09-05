@@ -57,74 +57,23 @@ app.post('/api/users', function (req, res) {
   })
 })
 
+
+
+
 // POST endpoint to add exercise
 app.post('/api/users/:_id/exercises', function (req, res) {
-  // search for user
-  UserModel.findOne({ _id: req.body[':_id'] }).then(data => {
-    //save exercise into user log
-    data.log.push({
-      description: req.body.description,
-      duration: req.body.duration,
-      date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
-    })
-
-    // save edits
-    data.save().then(data => {
-      // send response with user object with the exercise fields added
-      res.json({
-        _id: data._id,
-        username: data.username,
-        date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString(),
-        duration: req.body.duration,
-        description: req.body.description
-      })
-    })
-
-
-        // increase count
-        data.count += 1
-
-        // save edits
-        data.save().then(data => {
-          console.log('Exercise added to log!')
-        })
-
-      })
-
-      // add exercise to db
-      exercise.save().then(data => {
-        console.log("Exercised saved!")
-
-        res.json({
-          _id: userID,
-          username: userUsername,
-          date: new Date(data.date).toDateString(),
-          duration: Number(req.body.duration),
-          description: req.body.description
-        })
-      })
-    }
-    else {
-      // if user found
-      res.json({ error: 'user not found' })
-    }
-  }).catch(error => res.send(error.toString()))
-
+  
 })
 
 
 // GET endpoint to get exercise log
 app.get('/api/users/:_id/logs', function (req, res) {
-  UserModel.findOne({ _id: req.params._id }).then(data => {
-    //send back response with the user object with a log array of all the exercises added
-    res.json({
-      _id: data._id,
-      username: data.username,
-      count: data.log.length,
-      log: data.log
-    })
-  }).catch(error => res.send(error.toString()))
+
 })
+
+
+
+
 
 // GET end point to get all users
 app.get('/api/users', function (req, res) {
