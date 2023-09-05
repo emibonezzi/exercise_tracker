@@ -18,6 +18,10 @@ mongoose.connect(process.env.MONGO_URI, {
 // create user Schema
 const userSchema = new mongoose.Schema({
   username: String,
+  log: {
+    type: [Object],
+    default: []
+  }
 })
 
 // create user Model
@@ -60,52 +64,39 @@ app.post('/api/users', function (req, res) {
 // POST endpoint to add exercise
 app.post('/api/users/:_id/exercises', function (req, res) {
   // search for user
-  UserModel.findOne({ _id: req.params['_id'] }).then(data => {
+  UserModel.findOne({ _id: req.body[':_id'] }).then(data => {
     //save exercise into user log
     data.log.push({
-      description: req.params.description,
-      duration: Number(req.params.duration),
-      date: req.params.date ? new Date(req.params.date).toDateString() : new Date(Date.now()).toDateString()
+      description: req.body.description,
+      duration: req.body.duration,
+      date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString()
     })
 
     // save edits
     data.save().then(data => {
-      const userObj = {
-        username: data.username,
-        description: req.params.description,
-        duration: Number(req.params.duration),
-        date: req.params.date ? new Date(req.params.date).toDateString() : new Date(Date.now()).toDateString(),
-        _id: data._id
-      }
       // send response with user object with the exercise fields added
-      res.json(userObj)
+      res.json({
+        _id: data._id,
+        username: data.username,
+        date: req.body.date ? new Date(req.body.date).toDateString() : new Date(Date.now()).toDateString(),
+        duration: req.body.duration,
+        description: req.body.description
+      })
     })
 
 
-        res.json({
-          username: userUsername,
-          description: req.body.description,
-          duration: Number(req.body.duration),
-          date: new Date(data.date).toDateString(),
-          _id: userID
-        })
-      })
-    }
-    else {
-      // if user found
-      res.json({ error: 'user not found' })
-    }
-  }).catch(error => res.send(error.toString()))
+  })
+  // .catch(error => res.send(error.toString()))
 
 })
 
 
 // GET endpoint to get exercise log
 app.get('/api/users/:_id/logs', function (req, res) {
-  UserModel.findOne({ _id: req.params._id }).lean().then(data => {
+  UserModel.findOne({ _id: req.params._id }).then(data => {
     //send back response with the user object with a log array of all the exercises added
     res.json({
-      _id: req.params._id,
+      _id: data._id,
       username: data.username,
       count: data.log.length,
       log: data.log
