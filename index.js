@@ -18,10 +18,6 @@ mongoose.connect(process.env.MONGO_URI, {
 // create user Schema
 const userSchema = new mongoose.Schema({
   username: String,
-  log: {
-    type: [Object],
-    default: []
-  }
 })
 
 // create user Model
@@ -86,8 +82,20 @@ app.post('/api/users/:_id/exercises', function (req, res) {
     })
 
 
-  })
-  // .catch(error => res.send(error.toString()))
+        res.json({
+          username: userUsername,
+          description: req.body.description,
+          duration: Number(req.body.duration),
+          date: new Date(data.date).toDateString(),
+          _id: userID
+        })
+      })
+    }
+    else {
+      // if user found
+      res.json({ error: 'user not found' })
+    }
+  }).catch(error => res.send(error.toString()))
 
 })
 
