@@ -17,11 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // create user Schema
 const userSchema = new mongoose.Schema({
-  username: String,
-  log: {
-    type: [Object],
-    default: []
-  }
+  username: String
 })
 
 // create user Model
@@ -85,8 +81,34 @@ app.post('/api/users/:_id/exercises', function (req, res) {
     })
 
 
-  })
-  // .catch(error => res.send(error.toString()))
+        // increase count
+        data.count += 1
+
+        // save edits
+        data.save().then(data => {
+          console.log('Exercise added to log!')
+        })
+
+      })
+
+      // add exercise to db
+      exercise.save().then(data => {
+        console.log("Exercised saved!")
+
+        res.json({
+          _id: userID,
+          username: userUsername,
+          date: new Date(data.date).toDateString(),
+          duration: Number(req.body.duration),
+          description: req.body.description
+        })
+      })
+    }
+    else {
+      // if user found
+      res.json({ error: 'user not found' })
+    }
+  }).catch(error => res.send(error.toString()))
 
 })
 
