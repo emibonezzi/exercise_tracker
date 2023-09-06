@@ -120,15 +120,19 @@ app.get('/api/users/:_id/logs', function (req, res) {
   UserModel.findOne({ _id: req.params._id }).then(data => {
     const userId = data._id
     const userUsername = data.username
-    // if from parameters is found
-    if (req.query.from) {
-      console.log('From found')
-      //send response with log
+    const fromFilter = req.query.from ? new Date(req.query.from) : new Date(null)
+    const toFilter = req.query.to ? new Date(req.query.to) : new Date(Date.now())
+    const limitFilter = req.query.limit ? req.query.limit : data.log.length + 1
+
+    // if query params
+    if (Object.keys(req.query).length > 0) {
       res.json({
         username: userUsername,
         count: data.log.length,
         _id: userId,
-        log: [data.log.filter(item => new Date(item.date) >= new Date(req.query.from))]
+        log: data.log.filter(item =>
+          new Date(item.date) >= fromFilter &&
+          new Date(item.date) <= toFilter).slice(0, limitFilter)
       })
     } else {
       //send response with log
